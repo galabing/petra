@@ -10,19 +10,20 @@ import utils
 from os import path, remove, stat, system
 
 WGET = '/usr/local/bin/wget'
+PERIOD = '3'  # User '12' for annual reports.
 
 def download(ticker, report_type, output_path):
   url = ('http://financials.morningstar.com/ajax/ReportProcess4CSV.html'
-         '?t=%s&region=usa&culture=en-US&cur=USD&reportType=%s&period=3'
-         '&dataType=A&order=asc&columnYear=10&rounding=3&view=raw'
-         '&denominatorView=raw&number=3' % (ticker, report_type))
+         '?t=%s&region=usa&culture=en-US&cur=USD&reportType=%s&period=%s'
+         '&dataType=A&order=asc&columnYear=5&rounding=3&view=raw'
+         '&denominatorView=raw&number=3' % (ticker, report_type, PERIOD))
   cmd = '%s -q "%s" -O %s' % (WGET, url, output_path)
   if system(cmd) != 0:
     logging.warning('Download failed for %s: %s' % (ticker, url))
     if path.isfile(output_path):
       remove(output_path)
     return False
-  if stat(output_path)[stat.ST_SIZE] <= 0:
+  if stat(output_path).st_size <= 0:
     logging.warning('Empty downloaded file for %s: %s' % (ticker, url))
     remove(output_path)
     return False
