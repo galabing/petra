@@ -10,13 +10,12 @@ import utils
 from os import path, remove, stat, system
 
 WGET = '/usr/local/bin/wget'
-PERIOD = '3'  # User '12' for annual reports.
 
-def download(ticker, report_type, output_path):
+def download(ticker, report_type, period, output_path):
   url = ('http://financials.morningstar.com/ajax/ReportProcess4CSV.html'
          '?t=%s&region=usa&culture=en-US&cur=USD&reportType=%s&period=%s'
          '&dataType=A&order=asc&columnYear=5&rounding=3&view=raw'
-         '&denominatorView=raw&number=3' % (ticker, report_type, PERIOD))
+         '&denominatorView=raw&number=3' % (ticker, report_type, period))
   cmd = '%s -q "%s" -O %s' % (WGET, url, output_path)
   if system(cmd) != 0:
     logging.warning('Download failed for %s: %s' % (ticker, url))
@@ -33,6 +32,7 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('--ticker_file', required=True)
   parser.add_argument('--report_type', required=True)
+  parser.add_argument('--period', required=True)
   parser.add_argument('--output_dir', required=True)
   parser.add_argument('--overwrite', action='store_true')
   parser.add_argument('--verbose', action='store_true')
@@ -43,6 +43,8 @@ def main():
   rt = args.report_type
   assert rt == 'is' or rt == 'bs' or rt == 'cf', (
       'report_type must be one of "is", "bs" and "cf"')
+  p = args.period
+  assert p == '3' or p == '12', 'period must be "3" or "12"'
 
   # Tickers are listed one per line.
   with open(args.ticker_file, 'r') as fp:
@@ -66,7 +68,7 @@ def main():
     else: dl = True
 
     if dl:
-      ok = download(ticker, rt, output_path)
+      ok = download(ticker, rt, p, output_path)
       if ok: sl.append(ticker)
       else: fl.append(ticker)
   logging.info('Downloaded %d tickers, failed %d tickers'
