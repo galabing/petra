@@ -95,8 +95,40 @@ IS_SKIP = {
         'NWSA',
     },
 }
+
+BS_REQ = {
+    '|Total assets': 'total-assets',
+    '|Total liabilities': 'total-liabilities',
+    "|Total stockholders' equity": 'total-equity',
+    "|Total Stockholders' equity": 'total-equity',
+}
+BS_OPT = {
+    '|Intangible assets': 'intangible-assets',
+}
+BS_ADD = {
+    'total-liabilities': {
+        ("|Total stockholders' equity",
+         "|Total liabilities and stockholders' equity"),
+    },
+}
+BS_SKIP = {
+}
+
+CF_REQ = {
+    'Free Cash Flow|Operating cash flow': 'operating-cashflow',
+    '|Net cash provided by operating activities': 'operating-cashflow',
+}
+CF_OPT = {
+}
+CF_ADD = {
+}
+CF_SKIP = {
+}
+
 TYPE_MAP = {
     'is': (IS_REQ, IS_OPT, IS_ADD, IS_SKIP),
+    'bs': (BS_REQ, BS_OPT, BS_ADD, BS_SKIP),
+    'cf': (CF_REQ, CF_OPT, CF_ADD, CF_SKIP),
 }
 
 def find_additional(lines, combinations):
