@@ -14,8 +14,8 @@ WGET = '/usr/local/bin/wget'
 def download(ticker, report_type, period, output_path):
   url = ('http://financials.morningstar.com/ajax/ReportProcess4CSV.html'
          '?t=%s&region=usa&culture=en-US&cur=USD&reportType=%s&period=%s'
-         '&dataType=A&order=asc&columnYear=5&rounding=3&view=raw'
-         '&denominatorView=raw&number=3' % (ticker, report_type, period))
+         '&dataType=A&order=asc&columnYear=5&rounding=1&view=raw'
+         '&denominatorView=raw&number=1' % (ticker, report_type, period))
   cmd = '%s -q "%s" -O %s' % (WGET, url, output_path)
   if system(cmd) != 0:
     logging.warning('Download failed for %s: %s' % (ticker, url))
