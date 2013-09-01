@@ -66,10 +66,10 @@ def main():
       v = float(v) * float(a)
       if d in vmap: vmap[d] += v
       else: vmap[d] = v
-    if len(vmap) < max(1, k/2):
+    assert len(vmap) <= k
+    if len(vmap) < k:  #max(1, k/2):
       logging.warning('Could not find enough data for %s' % ticker)
       continue
-    assert len(vmap) <= k
     volume_map[ticker] = sum(vmap.values()) / len(vmap)
 
   with open(args.output_path, 'w') as fp:
