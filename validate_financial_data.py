@@ -52,7 +52,9 @@ IS_OPT = {
 }
 IS_ADD = {
     'revenue': {
-        ('|Total interest income', '|Total noninterest revenue'),
+        ('|Total interest income',
+         '|Total interest expense',
+         '|Total noninterest revenue'),
     },
 }
 # TODO: Many of these below seem to use a different template for reporting,
@@ -148,6 +150,7 @@ def find_additional(lines, combinations):
       return True
   return False
 
+# Returns: (keys, has_opt).
 def validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
   with open(input_path, 'r') as fp:
     lines = fp.read().splitlines()
@@ -156,6 +159,7 @@ def validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
     lines[i] = lines[i].replace('\ufeff"', '"')
   ttm = 0
   header = ''
+  keys = set()
   metrics = set()
   for items in reader(lines, delimiter=','):
     assert len(items) > 0
@@ -167,6 +171,7 @@ def validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
       ttm = 1
     assert len(items) == 6 + ttm, items
     key = '%s|%s' % (header, items[0])
+    keys.add(key)
     hit = False
     if key in req_map:
       metrics.add(req_map[key])
@@ -193,7 +198,7 @@ def validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
     elif not find_additional(lines, add_map[d]):
       final_diff.add(d)
   assert len(final_diff) == 0, 'Non-empty diff: %s' % final_diff
-  return len((metrics & set(opt_map.values()))) > 0
+  return keys, len((metrics & set(opt_map.values()))) > 0
 
 def main():
   parser = argparse.ArgumentParser()
@@ -217,6 +222,7 @@ def main():
   logging.info('Processing %d tickers' % len(tickers))
 
   total, opts = 0, 0
+  common_keys = None
   for i in range(len(tickers)):
     ticker = tickers[i]
     if ticker < args.from_ticker or ticker in SKIPPED_TICKERS:
@@ -228,10 +234,17 @@ def main():
     if not path.isfile(input_path):
       logging.warning('Input file does not exist: %s' % input_path)
       continue
-    if validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
+    keys, has_opt = validate(
+        input_path, ticker, req_map, opt_map, add_map, skip_map)
+    if common_keys is None:
+      common_keys = keys
+    else:
+      common_keys &= keys
+    if has_opt:
       opts += 1
     total += 1
   logging.info('%d out of %d have optional metrics' % (opts, total))
+  logging.info('Common keys: %s' % common_keys)
 
 if __name__ == '__main__':
   main()
