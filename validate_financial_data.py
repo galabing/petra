@@ -133,6 +133,13 @@ TYPE_MAP = {
     'cf': (CF_REQ, CF_OPT, CF_ADD, CF_SKIP),
 }
 
+def distance(ym1, ym2):
+  y1, m1 = ym1.split('-')
+  y2, m2 = ym2.split('-')
+  y1, m1 = int(y1), int(m1)
+  y2, m2 = int(y2), int(m2)
+  return (y1 - y2) * 12 + m1 - m2
+
 def find_additional(lines, combinations):
   header = ''
   keys = set()
@@ -150,7 +157,7 @@ def find_additional(lines, combinations):
       return True
   return False
 
-# Returns: (keys, has_opt).
+# Returns: (keys, has_opt, is_quarterly).
 def validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
   with open(input_path, 'r') as fp:
     lines = fp.read().splitlines()
@@ -161,6 +168,7 @@ def validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
   header = ''
   keys = set()
   metrics = set()
+  is_quarterly = True
   for items in reader(lines, delimiter=','):
     assert len(items) > 0
     if len(items) == 1:
@@ -169,7 +177,12 @@ def validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
     if (items[0].startswith('Fiscal year ends in ')
         and items[-1] == 'TTM'):
       ttm = 1
+      for j in range(1, len(items)-ttm-1):
+        #assert distance(items[j+1], items[j]) == 3
+        if distance(items[j+1], items[j]) != 3:
+          is_quarterly = False
     assert len(items) == 6 + ttm, items
+
     key = '%s|%s' % (header, items[0])
     keys.add(key)
     hit = False
@@ -198,7 +211,7 @@ def validate(input_path, ticker, req_map, opt_map, add_map, skip_map):
     elif not find_additional(lines, add_map[d]):
       final_diff.add(d)
   assert len(final_diff) == 0, 'Non-empty diff: %s' % final_diff
-  return keys, len((metrics & set(opt_map.values()))) > 0
+  return keys, len((metrics & set(opt_map.values()))) > 0, is_quarterly
 
 def main():
   parser = argparse.ArgumentParser()
@@ -221,7 +234,7 @@ def main():
     tickers = fp.read().splitlines()
   logging.info('Processing %d tickers' % len(tickers))
 
-  total, opts = 0, 0
+  total, opts, quarterly = 0, 0, 0
   common_keys = None
   for i in range(len(tickers)):
     ticker = tickers[i]
@@ -234,7 +247,7 @@ def main():
     if not path.isfile(input_path):
       logging.warning('Input file does not exist: %s' % input_path)
       continue
-    keys, has_opt = validate(
+    keys, has_opt, is_quarterly = validate(
         input_path, ticker, req_map, opt_map, add_map, skip_map)
     if common_keys is None:
       common_keys = keys
@@ -242,8 +255,11 @@ def main():
       common_keys &= keys
     if has_opt:
       opts += 1
+    if is_quarterly:
+      quarterly += 1
     total += 1
   logging.info('%d out of %d have optional metrics' % (opts, total))
+  logging.info('%d out of %d are consecutive quarters' % (quarterly, total))
   logging.info('Common keys: %s' % common_keys)
 
 if __name__ == '__main__':

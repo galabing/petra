@@ -16,3 +16,12 @@ def setup_logging(verbose):
   logging.basicConfig(format='[%(levelname)s] %(asctime)s %(message)s',
                       level=level)
 
+def read_map(filename):
+  with open(filename, 'r') as fp:
+    lines = fp.read().splitlines()
+  m = dict()
+  for line in lines:
+    k, v = line.split(' ')
+    m[k] = float(v)
+  return m
+

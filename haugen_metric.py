@@ -21,11 +21,16 @@ def main():
   parser.add_argument('--input_dir', required=True)
   parser.add_argument('--metric', required=True)
   parser.add_argument('--yyyy_mm', required=True)
+  # Aggregate the last k quarters' data.
+  parser.add_argument('--k', default='1')
   parser.add_argument('--output_path', required=True)
   parser.add_argument('--verbose', action='store_true')
   args = parser.parse_args()
 
   utils.setup_logging(args.verbose)
+
+  k = int(args.k)
+  assert k > 0
 
   # Tickers are listed one per line.
   with open(args.ticker_file, 'r') as fp:
@@ -48,26 +53,52 @@ def main():
     n = len(items)
     assert n > 0
     assert items[0] == 'date'
-    index = -1
+    # We require n - 1 >= k + 1:
+    # n - 1: the number of quarters for which data is available
+    # k: the number of quarters for which data is needed
+    # We further need k + 1 quarters, at least for the dates, because we
+    # want to ensure that the previous (k + 1)th quarter deed ends at a
+    # proper date.  Otherwise the first quarter we use is not a valid span.
+    if n - 1 < k + 1:
+      logging.warning('Not enough quarters for aggregation:'
+                      ' wanted at least %d, saw %d' % (k+1, n-1))
+      continue
+    indexes = None
     for j in range(len(items) - 1, 0, -1):
       # Sanity check of format validity.
       y, m = items[j].split('-')
       y, m = int(y), int(m)
       if items[j] <= args.yyyy_mm:
-        index = j
+        # We found the most recent quarter.  Now push the most recent k
+        # quarters in.  Bail if we have less than k left.
+        if j >= k + 1:
+          indexes = list(range(j-k+1, j+1))
         break
-    logging.debug('Using %s for %s' % (items[index], ticker))
-    if index <= 0 or distance(args.yyyy_mm, items[index]) > 6:
-      logging.warning('Could not find any recent date for %s' % ticker)
+    if indexes is None:
+      logging.warning('Not enough recent quarters for aggregation')
+      continue
+    logging.debug('Index is %s' % indexes)
+    assert len(indexes) == k
+    if distance(args.yyyy_mm, items[indexes[-1]]) > 6:
+      logging.warning('The most recent quarter is not recent enough')
+      continue
+    is_quarterly = True
+    for j in indexes:
+      if distance(items[j], items[j-1]) != 3:
+        is_quarterly = False
+        break
+    if not is_quarterly:
+      logging.warning('Data is not quarterly')
       continue
     found = False
     for j in range(1, len(lines)):
       items = lines[j].split(',')
       assert len(items) == n
       if items[0] == args.metric:
-        metric = items[index]
-        if metric == '':
-          break
+        metric = 0.0
+        for jj in indexes:
+          if items[jj] != '':
+            metric += float(items[jj])
         metric_map[ticker] = float(metric)
         found = True
         break
