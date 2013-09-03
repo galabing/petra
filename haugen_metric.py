@@ -59,9 +59,12 @@ def main():
     # We further need k + 1 quarters, at least for the dates, because we
     # want to ensure that the previous (k + 1)th quarter deed ends at a
     # proper date.  Otherwise the first quarter we use is not a valid span.
-    if n - 1 < k + 1:
+    #
+    # UPDATE: now require n - 1 >= k.  We no longer care about the validity
+    # of the previous quarter so that we can train on more data.
+    if n - 1 < k:
       logging.warning('Not enough quarters for aggregation:'
-                      ' wanted at least %d, saw %d' % (k+1, n-1))
+                      ' wanted at least %d, saw %d' % (k, n-1))
       continue
     indexes = None
     for j in range(len(items) - 1, 0, -1):
@@ -71,7 +74,7 @@ def main():
       if items[j] <= args.yyyy_mm:
         # We found the most recent quarter.  Now push the most recent k
         # quarters in.  Bail if we have less than k left.
-        if j >= k + 1:
+        if j >= k:  # j >= k + 1  # before UPDATE
           indexes = list(range(j-k+1, j+1))
         break
     if indexes is None:
@@ -83,8 +86,12 @@ def main():
       logging.warning('The most recent quarter is not recent enough')
       continue
     is_quarterly = True
-    for j in indexes:
-      if distance(items[j], items[j-1]) != 3:
+    #for j in indexes:
+    #  if distance(items[j], items[j-1]) != 3:
+    #    is_quarterly = False
+    #    break
+    for j in range(len(indexes) - 1):
+      if distance(items[indexes[j+1]], items[indexes[j]]) != 3:
         is_quarterly = False
         break
     if not is_quarterly:
