@@ -43,8 +43,8 @@ def main():
   er6_map = utils.read_map(args.er6_path)
   cf2p_map = utils.read_map(args.cf2p_path)
   tickers = (er1_map.keys() & er12_map.keys() & tv2mc_map.keys()
-             & er2_map.keys() & roe_map.keys() & b2p_map.keys()
-             & er6_map.keys() & cf2p_map.keys())
+             & er2_map.keys() & e2p_map.keys() & roe_map.keys()
+             & b2p_map.keys() & er6_map.keys() & cf2p_map.keys())
   logging.info('%d tickers' % len(tickers))
   logging.info('total weight: %f' %
       (ER1 + ER12 + TV2MC + ER2 + E2P + ROE + B2P + ER6 + CF2P))

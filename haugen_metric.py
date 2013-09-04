@@ -24,6 +24,7 @@ def main():
   # Aggregate the last k quarters' data.
   parser.add_argument('--k', default='1')
   parser.add_argument('--output_path', required=True)
+  parser.add_argument('--skip_empty', action='store_true')
   parser.add_argument('--verbose', action='store_true')
   args = parser.parse_args()
 
@@ -103,9 +104,14 @@ def main():
       assert len(items) == n
       if items[0] == args.metric:
         metric = 0.0
+        has_empty = False
         for jj in indexes:
-          if items[jj] != '':
-            metric += float(items[jj])
+          if items[jj] == '':
+            has_empty = True
+            continue
+          metric += float(items[jj])
+        if has_empty and args.skip_empty:
+          break
         metric_map[ticker] = float(metric)
         found = True
         break
