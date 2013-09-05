@@ -5,12 +5,12 @@ import sys
 
 # Configs.
 DATE = '2013-03'  # The date for training data.
-MAX_DATE = '2013-07'  # The latest date for groundtruth price data.
+MAX_DATE = '2013-08'  # The latest date for groundtruth price data.
 TEST_MONTHS = [1, 2, 3, 4, 6, 12]
 
 IDATA_DIR = '../data'
 DATA_DIR = '../data/%s' % DATE
-CODE_DIR = './'
+CODE_DIR = '.'
 
 # Input files.
 DI_T = './data/russell3000.txt'
