@@ -9,6 +9,24 @@ import utils
 from os import path
 
 K = 10   # deciles
+# Top and bottom # stocks.
+T = [1, 5, 10, 20, 30]
+B = [-1, -5, -10, -20, -30]
+
+def compute_return(rs, r_map, positions):
+  output = []
+  for p in positions:
+    assert p != 0
+    if p > 0: r = range(p)
+    else: r = range(len(rs)+p, len(rs))
+    s, c = 0.0, 0
+    for i in r:
+      s += r_map[rs[i][0]]
+      c += 1
+    if p > 0: assert c == p
+    else: assert c == -p
+    output.append(s/c)
+  return output
 
 def main():
   parser = argparse.ArgumentParser()
@@ -64,6 +82,21 @@ def main():
     meanr /= count
     logging.info('decile %d: %d stocks, mean return = %.2f%%'
         % (i+1, count, meanr * 100))
+  tr = compute_return(rs, r_map, T)
+  br = compute_return(rs, r_map, B)
+  logging.info('Mean return for top %s is %s' % (T, tr))
+  logging.info('Mean return for bot %s is %s' % (B, br))
+
+  rss = [(p[0], p[1], r_map[p[0]]) for p in rs]
+  rss.sort(key=lambda x: x[2])
+  logging.info('Top 10 gains: %s, average: %f'
+      % ([x[2] for x in rss[-10:]], sum([x[2] for x in rss[-10:]])/10))
+  logging.info('Top 10 scores: %s, average: %f'
+      % ([x[1] for x in rss[-10:]], sum([x[1] for x in rss[-10:]])/10))
+  logging.info('Bot 10 gains: %s, average: %f'
+      % ([x[2] for x in rss[:10]], sum([x[2] for x in rss[:10]])/10))
+  logging.info('Bot 10 scores: %s, average: %f'
+      % ([x[1] for x in rss[:10]], sum([x[1] for x in rss[:10]])/10))
 
 if __name__ == '__main__':
   main()

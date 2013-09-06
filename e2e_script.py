@@ -4,7 +4,7 @@ import os
 import sys
 
 # Configs.
-DATE = '2013-03'  # The date for training data.
+DATE = '2013-07'  # The date for training data.
 MAX_DATE = '2013-08'  # The latest date for groundtruth price data.
 TEST_MONTHS = [1, 2, 3, 4, 6, 12]
 
